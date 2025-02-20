@@ -1,0 +1,200 @@
+---
+title: inclass-week5
+author: Ziyang Ye
+format:
+    html:
+        code-fold: true
+        embed-resources: true
+        self-contained: true
+        theme:
+            light: [cosmo, theme.scss]
+            dark: [cosmo, theme-dark.scss]
+        toc: true
+---
+
+### Activity 1
+
+
+
+```{r}
+
+set.seed(12345)
+
+
+n1 <- 100         
+n2 <- 100        
+reps <- 1000   
+
+
+abs_diff <- numeric(reps)
+
+for (i in 1:reps) {
+  x1 <- rnorm(n1, mean = 1e-6, sd = 1e-2)
+  x2 <- rnorm(n2, mean = 1e12, sd = 1e2)
+  x <- c(x1, x2)
+  n <- length(x) 
+  var_builtin <- var(x)
+  var_manual <- (sum(x^2) / (n - 1)) - ((sum(x) / (n - 1))^2)
+  abs_diff[i] <- abs(var_builtin - var_manual)
+}
+
+hist(abs_diff, 
+     main = "Histogram of Absolute Differences in Variance Estimates",
+     xlab = "Absolute Difference",
+     col = "skyblue",
+     border = "white")
+
+
+```
+### Activity 2
+
+
+For a $p$-dimensional random vector $\mathbf{X}$ following the standard multivariate Normal distribution,
+$$
+\mathbf{X} \sim N(\mathbf{0}_p, \mathbf{I}_p),
+$$
+the transformation
+$$
+\mathbf{Y} = \mathbf{S}^\top \mathbf{X}
+$$
+is claimed to yield a new random vector $\mathbf{Y}$ with covariance matrix
+$$
+\operatorname{Cov}(\mathbf{Y}) = \mathbf{S}^\top \mathbf{S} = \mathbf{\Sigma}.
+$$
+
+## Proof of the Statement
+
+1. **Mean of $\mathbf{Y}$:**
+
+   Since
+   $$
+   \mathbf{X} \sim N(\mathbf{0}_p, \mathbf{I}_p),
+   $$
+   we have
+   $$
+   \mathbb{E}[\mathbf{X}] = \mathbf{0}_p.
+   $$
+   Then,
+   $$
+   \mathbb{E}[\mathbf{Y}] = \mathbb{E}[\mathbf{S}^\top \mathbf{X}] = \mathbf{S}^\top \mathbb{E}[\mathbf{X}] = \mathbf{S}^\top \mathbf{0}_p = \mathbf{0}_p.
+   $$
+
+2. **Covariance of $\mathbf{Y}$:**
+
+   The covariance matrix of $\mathbf{Y}$ is given by
+   $$
+   \operatorname{Cov}(\mathbf{Y}) = \mathbb{E}\left[(\mathbf{Y} - \mathbb{E}[\mathbf{Y}])(\mathbf{Y} - \mathbb{E}[\mathbf{Y}])^\top\right].
+   $$
+   Since $\mathbb{E}[\mathbf{Y}] = \mathbf{0}_p$, this simplifies to
+   $$
+   \operatorname{Cov}(\mathbf{Y}) = \mathbb{E}\left[\mathbf{Y}\mathbf{Y}^\top\right].
+   $$
+
+   $$
+   \operatorname{Cov}(\mathbf{Y}) = \mathbb{E}\left[\mathbf{S}^\top \mathbf{X}\mathbf{X}^\top \mathbf{S}\right] = \mathbf{S}^\top \, \mathbb{E}\left[\mathbf{X}\mathbf{X}^\top\right] \mathbf{S}.
+   $$
+   Since $\operatorname{Cov}(\mathbf{X}) = \mathbf{I}_p$, we have
+   $$
+   \mathbb{E}\left[\mathbf{X}\mathbf{X}^\top\right] = \mathbf{I}_p.
+   $$
+   Therefore,
+   $$
+   \operatorname{Cov}(\mathbf{Y}) = \mathbf{S}^\top \mathbf{I}_p \mathbf{S} = \mathbf{S}^\top \mathbf{S} = \mathbf{\Sigma}.
+   $$
+
+This shows that $\mathbf{Y}$ follows a multivariate Normal distribution with covariance matrix $\mathbf{\Sigma}$.
+
+## Two Methods to Factorize $\mathbf{\Sigma}$
+
+Assuming that $\mathbf{\Sigma}$ is positive definite, here are two standard factorization methods:
+
+### 1. Cholesky Decomposition
+
+
+$$
+\mathbf{\Sigma} = \mathbf{L} \mathbf{L}^\top,
+$$
+
+where $\mathbf{L}$ is a lower triangular matrix with positive diagonal entries. If we set
+
+$$
+\mathbf{S}^\top = \mathbf{L} \quad \text{or equivalently} \quad \mathbf{S} = \mathbf{L}^\top,
+$$
+
+then the transformation $\mathbf{Y} = \mathbf{S}^\top \mathbf{X}$ produces a random vector with covariance $\mathbf{\Sigma}$.
+
+### 2. Spectral Decomposition
+
+
+$$
+\mathbf{\Sigma} = \mathbf{U} \mathbf{\Lambda} \mathbf{U}^\top,
+$$
+
+where $\mathbf{U}$ is an orthogonal matrix whose columns are the eigenvectors of $\mathbf{\Sigma}$, $\mathbf{\Lambda}$ is a diagonal matrix containing the positive eigenvalues of $\mathbf{\Sigma}$.
+
+Define the square root of the diagonal matrix as $\mathbf{\Lambda}^{1/2}$. Then we can write
+
+$$
+\mathbf{\Sigma} = \mathbf{U} \mathbf{\Lambda}^{1/2} \mathbf{\Lambda}^{1/2} \mathbf{U}^\top = \left( \mathbf{\Lambda}^{1/2} \mathbf{U}^\top \right)^\top \left( \mathbf{\Lambda}^{1/2} \mathbf{U}^\top \right).
+$$
+
+Setting
+
+$$
+\mathbf{S}^\top = \mathbf{\Lambda}^{1/2} \mathbf{U}^\top
+$$
+
+we obtain the desired factorization.
+
+
+
+### Activity 3
+```{r}
+data <- read.csv("regression.csv")
+mod <- lm(y ~ ., data = data)
+X <- model.matrix(mod)
+y <- data$y
+
+beta_lm <- coef(mod)
+beta_inv <- solve(t(X) %*% X) %*% t(X) %*% y
+beta_solve <- solve(t(X) %*% X, t(X) %*% y)
+U <- chol(t(X) %*% X)
+z <- solve(t(U), t(X) %*% y)
+beta_chol <- solve(U, z)
+
+norm_inv <- sum(abs(beta_lm - beta_inv))
+norm_solve <- sum(abs(beta_lm - beta_solve))
+norm_chol <- sum(abs(beta_lm - beta_chol))
+
+print(norm_inv)
+print(norm_solve)
+print(norm_chol)
+
+```
+
+### Activity 4
+
+```{r}
+X <- as.matrix(data[ , -1])
+X_centered <- scale(X, center = TRUE, scale = FALSE)
+
+# Eigendecomposition of the covariance matrix
+cov_mat <- cov(X_centered)
+eigen_decomp <- eigen(cov_mat)
+A1 <- eigen_decomp$vectors
+
+# Method 2: Singular Value Decomposition (SVD) of the centered X matrix
+svd_decomp <- svd(X_centered)
+A2 <- svd_decomp$v
+
+# Adjust signs for comparison (eigenvectors are unique up to sign)
+for(j in 1:ncol(A1)) {
+  if(sum(A1[, j] * A2[, j]) < 0)
+    A2[, j] <- -A2[, j]
+}
+
+# Compute the Frobenius norm of the difference between A1 and A2
+norm_diff <- norm(A1 - A2, type = "F")
+print(norm_diff)
+```
+very close to zero, showing that both methods yield nearly identical principal components, as expected.
